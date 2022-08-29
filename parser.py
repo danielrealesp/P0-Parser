@@ -63,32 +63,337 @@ class Parser:
         except IndexError:
             print('PARSING TERMINADO - PROGRAMA VALIDO')
 
-
     def parseS(self):
         '''
         Funcion de parse del elemento distinguido
         '''
         self.accept('PROG')
 
-        #Miramos si el siguiente es una declaracion de
-        # variables
-
+        #Miramos si el siguiente es una declaracion de variables
         nextTok = self.nextToken()
 
         if nextTok == 'VAR':
-            self.paseVARDEC()
-
+            self.parseVARDEC()
         nextTok = self.nextToken() 
-        
         if nextTok == 'PROC':
             self.parsePROCSDEF()
-
         #TODO: VERIFICAR SI EL BLOQUE ES OBLIGATORIO 
         self.parseINSB()
 
         self.accept('GORP')
 
-    def parsePROCSDEF():
+    def parseINSB(self):
+
+        self.accept('{')
+        self.parseINSS()
+        self.accept('}')
+
+    def parseINSS(self):
+        #Terminales de los comandos
+        CMDSA = ['M', 'R', 'C', 'B', 'c', 'b', 'P', 'J', 'G']
+        #TODO: IMPLEMENTAR LA ASIGNACIÓN
+        CMDSB = ['walk', 'jump', 'jumpTo', 'veer', 'look', 'drop', 'grab', 'get', 'free', 'pop']
+        CS = ['if', 'while', 'repeatTimes']
+        terminales = {'CMDSA': CMDSA, 'CMDSB': CMDSB, "CS": CS}
+
+        self.parseINS(terminales)
+
+        if self.nextToken() != "}":
+            self.parseINSS()
+    
+    def parseCMD(self, terminales):
+        nextTok = self.nextToken()
+        if nextTok in terminales['CMDSA']:
+            self.parseCMDA()
+
+        elif nextTok in terminales['CMDSB']:
+            self.parseCMDB()
+        self.accept(';')
+
+    # ----------
+    # START CMDA
+    # ----------
+
+    def parseCMDA(self):
+        if self.nextToken() == 'J':
+            self.parseJUMP()
+
+        elif self.nextToken() == 'G':
+            self.parseGO()
+
+        else: # ['M', 'R', 'C', 'B', 'c', 'b', 'P']
+            self.accept(self.nextToken())
+
+    def parseJUMP(self):
+        self.accept('J')
+        self.accept('(')
+        self.parseNUM()
+        self.accept(')')
+
+    def parseGO(self):
+        self.accept('G')
+        self.accept('(')
+        self.parseNUM()
+        self.accept(',')
+        self.parseNUM()
+        self.accept(')')
+
+    # --------
+    # END CMDA
+    # --------
+
+    # ----------
+    # START CMDB
+    # ----------
+
+    def parseCMDB(self):
+        #TODO: Terminar
+        nt = self.nextToken()
+        
+        if nt == 'walk':
+            pass
+
+        elif nt == 'jump':
+            pass
+            
+        elif nt == 'jumpTo':
+            pass
+            
+        elif nt  == 'veer':
+            pass
+
+        elif nt == 'look':
+            pass
+        
+    def parseASS(self):
+        #TODO
+        pass
+
+    def parseWALK(self):
+        self.accept('walk')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseJUMP2(self):
+        self.accept('jump')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseJUMPTO(self):
+        self.accept('jumpTo')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseVEER(self):
+        self.accept('veer')
+        self.accept('(')
+        self.parseD()
+        self.accept(')')
+
+    def parseD(self):
+        D = ['left', 'right', 'around']
+        if self.nextToken() in D:
+            self.accept(self.nextToken())
+        else:
+            raise Exception('TOKEN NO RECONOCIDO - DIRECCION INVALIDA')
+
+    def parseLOOK(self):
+        self.accept('look')
+        self.accept('(')
+        self.parseO()
+        self.accept(')')
+    
+    def parseO(self):
+        O = ['north', 'south', 'east', 'west']
+        if self.nextToken() in O:
+            self.accept(self.nextToken())
+        else:
+            raise Exception('TOKEN NO RECONOCIDO - CARDINALIDAD INVALIDA')
+
+    def parseDROP(self):
+        self.accept('drop')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseGRAB(self):
+        self.accept('grab')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseGET(self):
+        self.accept('get')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseFREE(self):
+        self.accept('free')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parsePOP(self):
+        self.accept('pop')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseWALK2(self):
+        self.accept('walk')
+        self.accept('(')
+        self.parseD2()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseD2(self):
+        D2 = ['front', 'right', 'left', 'back']
+        if self.nextToken() in D2:
+            self.accept(self.nextToken())
+        else:
+            raise Exception('TOKEN NO RECONOCIDO - DIRECCION INVALIDA')
+
+    def parseWALK3(self):
+        self.accept('walk')
+        self.accept('(')
+        self.parseO()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    # --------
+    # END CMDB
+    # --------
+
+    # --------
+    # START CS
+    # --------
+
+    def parseCS(self):
+        if self.nextToken() == 'if':
+            self.parseIF()
+
+        elif self.nextToken() == 'while':
+            self.parseWHILE()
+
+        elif self.nextToken() == 'repeatTimes':
+            self.parseREPEAT()
+
+    def parseIF(self):
+        self.accept('if')
+        self.accept('(')
+        self.parseCOND()
+        self.accept(')')
+        self.parseBLOCK()
+        
+        if self.nextToken() == 'else':
+            self.accept('else')
+            self.parseBLOCK()
+
+        self.accept('fi')
+        
+    def parseWHILE(self):
+        self.accept('while')
+        self.accept('(')
+        self.parseCOND()
+        self.accept(')')
+        self.accept('do')
+        self.parseBLOCK()
+        self.accept('od')
+
+    def parseREPEAT(self):
+        self.accept('repeatTimes')
+        self.parseVARNUM()
+        self.parseBLOCK()
+        self.accept('per')
+
+    # ------
+    # END CS
+    # ------
+
+    # ----------
+    # START COND
+    # ----------
+
+    def parseCOND(self):
+        if self.nextToken() == 'isFacing':
+            self.parseISFACING()
+        elif self.nextToken() == 'isValid':
+            self.parseISVALID()
+        elif self.nextToken() == 'canWalk':
+            self.parseCANWALK0()
+        elif self.nextToken() == 'not':
+            self.parseNOT()
+        else:
+            raise Exception('TOKEN NO RECONOCIDO - CONDICION INVALIDA')
+
+    def parseISFACING(self):
+        self.accept('isFacing')
+        self.accept('(')
+        self.parseO()
+        self.accept(')')
+
+    def parseISVALID(self):
+        self.accept('isValid')
+        self.accept('(')
+        self.parseISVINS()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseISVINS(self):
+        ins = ['walk', 'jump', 'grab', 'pop', 'pick', 'free', 'drop']
+        if self.nextToken() in ins:
+            self.accept(self.nextToken())
+        else:
+            raise Exception('TOKEN NO RECONOCIDO - INSTRUCCION INVALIDA')
+
+    def parseCANWALK0(self):
+        canwalk = ['north', 'south', 'east', 'west']
+        canwalk2 = ['front', 'right', 'left', 'back']
+        
+        #TODO: verificar que funcione correctamente por el indice = 2
+        if self.tokens[2] in canwalk:
+            self.parseCANWALK()
+        elif self.tokens[2] in canwalk2:
+            self.parseCANWALK2()
+        else:
+            raise Exception ('TOKEN NO RECONOCIDO - DIRECCION INVALIDA')
+
+    def parseCANWALK(self):
+        self.accept('canWalk')
+        self.accept('(')
+        self.parseO()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseCANWALK2(self):
+        self.accept('canWalk')
+        self.accept('(')
+        self.parseD2()
+        self.accept(',')
+        self.parseVARNUM()
+        self.accept(')')
+
+    def parseNOT(self):
+        self.accept('not')
+        self.accept('(')
+        self.parseCOND()
+        self.accept(')')
+
+    # --------
+    # END COND
+    # --------
+
+    def parsePROCSDEF(self):
 
         self.parsePROCDEF()
         
@@ -96,144 +401,66 @@ class Parser:
         if nextTok == 'PROC':
             self.parsePROCSDEF()
 
-    def parsePROCDEF():
+    def parsePROCDEF(self):
         self.accept('PROC')
+
+        #Guarda el nombre de la función en la lista e inicializa el
+        # número de argumentos a 0
+
+        func_name = self.nextToken()
+        self.user_functions[func_name] = 0
+        #Consume el nombre
         self.parseNAME()
-        self.parseLISTPARAMS()
-        self.accept('{')
-        self.parseINSS()
-        self.accept('}')
+        self.parseLISTPARAMS(func_name)
+        self.parseINSB()
         self.accept('CORP')
 
-    def parseVARDEC():
+    def parseLISTPARAMS(self, func_name: str):
+        self.accept("(")
+        
+        nextTok = self.nextToken()
+        if nextTok != ')':
+            self.parseLISTNAM('FUNCARG', func_name=func_name)
+
+        self.accept(")")
+        
+    
+    def parseVARDEC(self):
         self.accept('VAR')
         self.parseLISTNAM()
         self.accept(';')
 
-    
-         
-        nexTok = self.nextToken()
-
-        if nexTok == '(':
-            self.accept('(')
-            self.parseINS()
-            self.accept(')')
-            self.parseS()
-        # De lo contrario únicamente una instruccion 
-        else:
-            self.parseINS()
-
-        # Consumir ')'
-
-        self.accept(')')
-
-        # Validamos si hay más instrucciones
-        nexTok = self.nextToken()
-        if nexTok == '(':
-            self.parseS()
-
-
-    def parseINS(self):
-        nexTok = self.nextToken()
-
-        #Casos para comandos
-
-        if nexTok == 'defvar':
-            self.accept('defvar')
-            var = self.nextToken()
-            self.user_variables.append(var)
-            self.parseNAME()
-            self.parseNUM()
-            pass
+    def parseLISTNAM(self, type: str, func_name=None):
+        #Agregar la variable a las definidas por el usuario
+        nextTok = self.nextToken()
+        if type == 'VARDEC':
+            self.user_variables.append(nextTok)
         
-        elif nexTok == '=':
-            self.accept('=')
-            self.parseVAR()
-            self.parseNUM()
+        elif type == 'FUNCARG':
+            if func_name:
+                self.user_functions[func_name] += 1
 
-        elif nexTok == 'move':
-            self.accept('move')
-            self.parseVARNUM()
+        self.parseNAME()
+        nextTok = self.nextToken()
+        if nextTok == ',':
+            self.accept(',')
+            self.parseLISTNAM(type=type, func_name=func_name)
 
-        elif nexTok == 'turn':
-            self.accept('turn')
-            self.parseD()
+    def parseINS(self, terminales: dict):
+        
+        nextTok = self.nextToken()
 
-        elif nexTok == 'face':
-            self.accept('face')
-            self.parseO()
+        if nextTok in terminales['CMDSA'] or nextTok in terminales['CMDSB']:
+            self.parseCMD(terminales)        
 
-        elif nexTok == 'put':
-            self.accept('put')
-            self.parseX()
-            self.parseVARNUM()
+        elif nextTok in terminales['CS']:
+            self.parseCS()
 
-        elif nexTok == 'pick':
-            self.accept('pick')
-            self.parseX()
-            self.parseVARNUM()
-
-        elif nexTok == 'rundirs':
-            self.accept('rundirs')
-            self.parseDs()
-
-        elif nexTok == 'move-face':
-            self.accept('move-face')
-            self.parseNUM()
-            self.parseO()
-
-        elif nexTok == 'skip':
-            self.accept('skip')
-
-        # Casos para las estructuras de control
-
-        elif nexTok == 'if':
-            self.accept('if')
-            self.parseCOND()
-            self.parseBLOCK()
-            self.parseBLOCK()
-
-        elif nexTok == 'loop':
-            self.accept('loop')
-            self.parseCOND()
-            self.parseBLOCK()
-
-        elif nexTok == 'repeat':
-            self.accept('repeat')
-            self.parseVARNUM()
-            self.parseBLOCK
-
-        elif nexTok == 'defun':
-            self.accept('defun')
-            #Incluir la función en la lista de funcione
-            # definidas por el usuario
-
-            func_name = self.nextToken()
-            self.user_functions[func_name] = []
-
-            #Continuar el parseo
-
-            self.parseNAME()
-            self.accept('(')
-            self.parseARGS(func_name)
-            self.accept(')')
-            pre_contex_vars = self.user_variables.copy()
-
-            #Se le agregan las nuevas variables al contexto
-            self.user_variables += self.user_functions[func_name] 
-            self.parseS()
-            
-            #Se sacan las variables del contexto
-            self.user_variables = pre_contex_vars
-
-        # Casos para funciones definidas por el usuario 
-
-        elif nexTok in self.user_functions.keys():
-            self.parseFUN()
-            self.parseUDFARGS(nexTok)
+        elif nextTok in self.user_functions.keys():
+            self.parsePC()
 
         else:
-            raise Exception('TOKEN NO RECONOCIDO- FUNCIÓN NO RECONOCIDA')
+            raise Exception('TOKEN NO ESPERADO')
 
     def parseVARNUM(self):
         try:

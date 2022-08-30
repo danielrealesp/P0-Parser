@@ -317,7 +317,6 @@ class Parser:
     # --------
 
     def parseCS(self):
-        #TODO: Diferenciar el if del ifelse
         if self.nextToken() == 'if':
             self.accept("if")
             self.accept("(")
@@ -587,22 +586,6 @@ class Parser:
 
         else:
             raise Exception('TOKEN NO ESPERADO - LA VARIABLE NO ESTA DEFINIDA')
-
-    def parseD(self):
-
-        nexTok = self.nextToken()
-        
-        if nexTok == ':left':
-            self.accept(':left')
-
-        elif nexTok == ':right':
-            self.accept(':right')
-        
-        elif nexTok == ':around':
-            self.accept(':around')
-
-        else:
-            raise Exception('TOKEN NO ESPERADO - DIRECCIÓN NO DEFINIDA')
 
     def parseARGS(self, func_name):
 

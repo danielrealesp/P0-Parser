@@ -1,8 +1,8 @@
 #################
-# AUTHOR: DANIEL REALES
-# 201822265
-################3
-
+# AUTHORS: 
+# DANIEL REALES (201822265)
+# ALEJANDRO GONZALEZ (201821205)
+################
 
 class Tokenizer:
 
@@ -34,6 +34,7 @@ class Parser:
 
     def parse(self):
         self.parseS()
+        print("PROGRAMA VALIDO")
 
     def accept(self, token):
         '''
@@ -92,7 +93,7 @@ class Parser:
         #Terminales de los comandos
         CMDSA = ['M', 'R', 'C', 'B', 'c', 'b', 'P', 'J', 'G']
         #TODO: IMPLEMENTAR LA ASIGNACIÓN
-        CMDSB = ['walk', 'jump', 'jumpTo', 'veer', 'look', 'drop', 'grab', 'get', 'free', 'pop']
+        CMDSB = ['walk', 'jump', 'jumpTo', 'veer', 'look', 'drop', 'grab', 'get', 'free', 'pop', 'go']
         CS = ['if', 'while', 'repeatTimes']
         terminales = {'CMDSA': CMDSA, 'CMDSB': CMDSB, "CS": CS}
 
@@ -106,9 +107,11 @@ class Parser:
         if nextTok in terminales['CMDSA']:
             self.parseCMDA()
 
-        elif nextTok in terminales['CMDSB']:
+        elif nextTok in terminales['CMDSB'] or nextTok in self.user_variables:
             self.parseCMDB()
-        self.accept(';')
+
+        if self.nextToken() != "}":
+            self.accept(';')
 
     # ----------
     # START CMDA
@@ -194,6 +197,17 @@ class Parser:
 
         elif nt == 'pop':
             self.parsePOP()
+
+        elif nt == 'go':
+            self.parseGO2()
+
+    def parseGO2(self):
+        self.accept('go')
+        self.accept('(')
+        self.parseVARNUM()
+        self.accept(",")
+        self.parseVARNUM()
+        self.accept(')')
 
 
     def parseASS(self):
@@ -452,13 +466,15 @@ class Parser:
 
         #Guarda el nombre de la función en la lista e inicializa el
         # número de argumentos a 0
-
         func_name = self.nextToken()
         self.user_functions[func_name] = 0
         #Consume el nombre
         self.parseNAME()
         self.parseLISTPARAMS(func_name)
         self.parseINSB()
+        for _ in range(self.user_functions[func_name]):
+            self.user_variables.pop()
+
         self.accept('CORP')
 
     def parseLISTPARAMS(self, func_name: str):
@@ -485,6 +501,7 @@ class Parser:
         elif type == 'FUNCARG':
             if func_name:
                 self.user_functions[func_name] += 1
+                self.user_variables.append(self.nextToken())
 
         self.parseNAME()
         nextTok = self.nextToken()
@@ -496,7 +513,7 @@ class Parser:
         
         nextTok = self.nextToken()
 
-        if nextTok in terminales['CMDSA'] or nextTok in terminales['CMDSB']:
+        if nextTok in terminales['CMDSA'] or nextTok in terminales['CMDSB'] or nextTok in self.user_variables:
             self.parseCMD(terminales)        
 
         elif nextTok in terminales['CS']:
@@ -517,7 +534,8 @@ class Parser:
             self.accept('(')
             self.parseUDFARGS(nt)
             self.accept(')')
-            self.accept(';')
+            if self.nextToken() != '}':
+                self.accept(';')
 
         else:
             raise Exception('TOKEN NO ESPERADO')
@@ -538,38 +556,6 @@ class Parser:
         
         if self.nextToken() == ')':
             self.accept(')')
-
-    def parseCOND(self):
-        self.accept('(')
-
-        nexTok = self.nextToken()
-
-        if nexTok == 'facing-p':
-            self.accept('facing-p')
-            self.parseO()
-
-        elif nexTok == 'can-put-p':
-            self.accept('can-put-p')
-            self.parseX()
-            self.parseVARNUM()
-
-        elif nexTok == 'can-pick-p':
-            self.accept('can-pick-p')
-            self.parseX()
-            self.parseVARNUM()
-
-        elif nexTok == 'can-move-p':
-            self.accept('can-move-p')
-            self.parseO()
-
-        elif nexTok == 'not':
-            self.accept('not')
-            self.parseCOND()
-
-        else:
-            raise Exception('TOKEN NO RECONOCIDO - CONDICIONAL MAL FORMULADO')
-
-        self.accept(')')
 
     def parseNAME(self):
 
@@ -618,57 +604,6 @@ class Parser:
         else:
             raise Exception('TOKEN NO ESPERADO - DIRECCIÓN NO DEFINIDA')
 
-
-    def parseO(self):
-
-        nexTok = self.nextToken()
-
-        if nexTok == ':north':
-            self.accept(nexTok)
-
-        elif nexTok == ':south':
-            self.accept(nexTok)
-
-        elif nexTok == ':east':
-            self.accept(nexTok)
-
-        elif nexTok == ':west':
-            self.accept(nexTok)
-
-        else:
-            raise Exception('TOKEN NO ESPERADO - ORIENTACION NO RECONOCIDA')
-
-    def parseX(self):
-
-        nexTok = self.nextToken()
-
-        if nexTok == ':chips':
-            self.accept(nexTok)
-
-        elif nexTok == ':ballons':
-            self.accept(nexTok)
-
-        else:
-            raise Exception('TOKEN NO ESPERADO - OBJETO NO RECONOCIDO')
-
-    def parseDs(self):
-        self.accept('(')
-        self.parseDss()
-        self.accept(')')
-
-    def parseDss(self):
-        possibilities = [':left', ':right', ':around']
-        self.parseD()
-        nextTok = self.nextToken()
-
-        if nextTok in possibilities:
-            self.parseDss()
-
-    def parseFUN(self):
-
-        # Únicamente consume el token generado
-        self.accept(self.nextToken())
-
     def parseARGS(self, func_name):
 
         nexTok = self.nextToken()
@@ -682,7 +617,7 @@ class Parser:
         arity = self.user_functions[func_name]
 
         for i in range(arity):
-            if i != arity - 2:
+            if i != arity - 1:
                 self.accept(self.nextToken())
                 self.accept(',')
             else:
@@ -690,7 +625,7 @@ class Parser:
 
 programa = '''
 PROG
-VAR n, x, y; PROC putCB(c, b)
+VAR n, x, y; PROC putCB(c, b,i)
 {
 drop(c);
 free(b); walk(n)
@@ -705,10 +640,13 @@ if (canWalk(west ,1)) { walk(west ,1)} fi
 CORP
 {
 go(3,3); n:=6;
-putCB (2 ,1)
+putCB (2 ,1, 3)
 }
 GORP
 '''
 
 tokenizer = Tokenizer(programa)
-print(tokenizer.tokenize())
+tokens = tokenizer.tokenize()
+
+parser = Parser(tokens)
+parser.parse()

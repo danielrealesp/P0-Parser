@@ -147,10 +147,13 @@ class Parser:
     # ----------
 
     def parseCMDB(self):
-        #TODO: Terminar
+
         nt = self.nextToken()
-        
-        if nt == 'walk':
+
+        if nt in self.user_variables:
+            self.parseASS()
+
+        elif nt == 'walk':
             self.accept('walk')
             self.accept('(')
 
@@ -194,8 +197,9 @@ class Parser:
 
 
     def parseASS(self):
-        #TODO
-        pass
+        self.parseVAR()
+        self.accept(':=')
+        self.parseNUM()
 
     def parseWALK(self):
         self.parseVARNUM()
@@ -299,8 +303,26 @@ class Parser:
     # --------
 
     def parseCS(self):
+        #TODO: Diferenciar el if del ifelse
         if self.nextToken() == 'if':
-            self.parseIF()
+            self.accept("if")
+            self.accept("(")
+            self.parseCOND()
+            self.accept(")")
+            self.parseINSB()
+            new_nt = self.nextToken()
+            if new_nt == 'fi':
+                self.accept('fi')
+            elif new_nt == 'else':
+                self.accept('else')
+                self.parseINSB()
+                if self.nextToken() == 'fi':
+                    self.accept('fi')
+                else:
+                    raise Exception('TOKEN INESPERADO - REVISAR LA ESTRUCTURA DEL CONDICIONAL')
+
+            else: 
+                raise Exception("TOKEN INESPERADO - REVISAR LA ESTRUCTURA DEL CONDICIONAL")
 
         elif self.nextToken() == 'while':
             self.parseWHILE()
@@ -327,13 +349,15 @@ class Parser:
         self.parseCOND()
         self.accept(')')
         self.accept('do')
-        self.parseBLOCK()
+        self.parseINSB()
         self.accept('od')
 
     def parseREPEAT(self):
         self.accept('repeatTimes')
+        self.accept('(')
         self.parseVARNUM()
-        self.parseBLOCK()
+        self.accept(')')
+        self.parseINSB()
         self.accept('per')
 
     # ------
@@ -480,6 +504,20 @@ class Parser:
 
         elif nextTok in self.user_functions.keys():
             self.parsePC()
+
+        else:
+            raise Exception('TOKEN NO ESPERADO')
+
+    def parsePC(self):
+        nt = self.nextToken()
+        arity = self.user_functions.get(nt, None)
+
+        if arity is not None:
+            self.accept(nt)
+            self.accept('(')
+            self.parseUDFARGS(nt)
+            self.accept(')')
+            self.accept(';')
 
         else:
             raise Exception('TOKEN NO ESPERADO')
@@ -641,12 +679,14 @@ class Parser:
             nexTok = self.nextToken()
 
     def parseUDFARGS(self, func_name):
-        args = self.user_functions[func_name]
-        arity = len(args)
+        arity = self.user_functions[func_name]
 
-        for _ in range(arity):
-            self.accept(self.nextToken())
-
+        for i in range(arity):
+            if i != arity - 2:
+                self.accept(self.nextToken())
+                self.accept(',')
+            else:
+                self.accept(self.nextToken())
 
 programa = '''
 PROG

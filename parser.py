@@ -151,27 +151,53 @@ class Parser:
         nt = self.nextToken()
         
         if nt == 'walk':
-            pass
+            self.accept('walk')
+            self.accept('(')
+
+            #Determinar cual de los 3 tipos de Walk es
+            o = ['north', 'south', 'east', 'west']
+            d2 = ['front', 'right', 'left', 'back']
+            nt_new = self.nextToken()  
+            if nt_new in o:
+                self.parseWALK3()
+            elif nt_new in d2:
+                self.parseWALK2()
+            else:
+                self.parseWALK()
 
         elif nt == 'jump':
-            pass
+            self.parseJUMP2()    
             
         elif nt == 'jumpTo':
-            pass
+            self.parseJUMPTO()
             
         elif nt  == 'veer':
-            pass
+            self.parseVEER()
 
         elif nt == 'look':
-            pass
-        
+            self.parseLOOK()
+
+        elif nt == 'drop':
+            self.parseDROP()
+
+        elif nt == 'grab':
+            self.parseGRAB()
+
+        elif nt == 'get':
+            self.parseGET()
+
+        elif nt == 'free':
+            self.parseFREE()
+
+        elif nt == 'pop':
+            self.parsePOP()
+
+
     def parseASS(self):
         #TODO
         pass
 
     def parseWALK(self):
-        self.accept('walk')
-        self.accept('(')
         self.parseVARNUM()
         self.accept(')')
 
@@ -246,8 +272,6 @@ class Parser:
         self.accept(')')
 
     def parseWALK2(self):
-        self.accept('walk')
-        self.accept('(')
         self.parseD2()
         self.accept(',')
         self.parseVARNUM()
@@ -261,8 +285,6 @@ class Parser:
             raise Exception('TOKEN NO RECONOCIDO - DIRECCION INVALIDA')
 
     def parseWALK3(self):
-        self.accept('walk')
-        self.accept('(')
         self.parseO()
         self.accept(',')
         self.parseVARNUM()
@@ -427,7 +449,7 @@ class Parser:
     
     def parseVARDEC(self):
         self.accept('VAR')
-        self.parseLISTNAM()
+        self.parseLISTNAM(type='VARDEC')
         self.accept(';')
 
     def parseLISTNAM(self, type: str, func_name=None):
